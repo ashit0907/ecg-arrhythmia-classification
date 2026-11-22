@@ -1,6 +1,6 @@
-,Normal,Supraventricular,Ventricular,Fusion,Unknown
-Normal,18052,36,21,2,7
-Supraventricular,111,435,8,2,0
-Ventricular,33,3,1393,18,1
-Fusion,18,0,9,135,0
-Unknown,13,0,2,0,1593
+,0,1,2,3,4
+0,18052,36,21,2,7
+1,111,435,8,2,0
+2,33,3,1393,18,1
+3,18,0,9,135,0
+4,13,0,2,0,1593
