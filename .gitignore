@@ -29,7 +29,6 @@ myenv/
 data/raw/*
 data/processed/*
 
-# Keep folder structure
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 
@@ -44,6 +43,9 @@ data/processed/*
 *.joblib
 *.pkl
 
+# Keep the final deployment model
+!models/lstm_plain.pt
+
 # ==============================
 # Logs and Temporary Files
 # ==============================
@@ -51,6 +53,8 @@ data/processed/*
 logs/
 tmp/
 temp/
+.pytest_cache/
+.mypy_cache/
 
 # ==============================
 # Environment Variables / Secrets
@@ -59,6 +63,7 @@ temp/
 .env.*
 !.env.example
 kaggle.json
+*service-account*.json
 
 # ==============================
 # IDE Settings

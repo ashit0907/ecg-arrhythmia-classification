@@ -2,9 +2,11 @@
 
 A PyTorch-based ECG heartbeat classification project comparing a 1D CNN, Bidirectional LSTM, and Bidirectional GRU against traditional machine learning baselines. The project investigates class imbalance, model architecture choices, evaluation metrics, and generalization limitations.
 
-> **Educational project — not a medical device.** This model is not intended for diagnosis, clinical decision-making, or patient monitoring.
+**Live Demo:** [ECG Arrhythmia Classification](https://ecg-arrhythmia-573539539303.asia-south1.run.app/)
 
-**Demo:** Coming soon — Hugging Face Spaces
+**API Documentation:** [FastAPI Swagger UI](https://ecg-arrhythmia-573539539303.asia-south1.run.app/docs)
+
+> **Educational project — not a medical device.** This model is not intended for diagnosis, clinical decision-making, or patient monitoring.
 
 ---
 
@@ -14,7 +16,9 @@ This project classifies individual ECG heartbeat segments into five categories u
 
 The primary objective is to compare different architectures on an imbalanced classification problem and investigate whether deep learning provides meaningful improvements over traditional machine learning.
 
-### Key results
+The final selected model is a Bidirectional LSTM trained using standard CrossEntropyLoss.
+
+### Key Results
 
 | Metric | Result |
 |---|---:|
@@ -28,13 +32,87 @@ The primary objective is to compare different architectures on an imbalanced cla
 
 The Bidirectional LSTM trained with standard cross-entropy was selected based on validation Macro-F1 and evaluated once on the separate test dataset.
 
-**Main findings:**
+### Main Findings
 
 - Accuracy alone is misleading on highly imbalanced ECG data.
 - Random Forest provides a strong traditional ML baseline.
 - Plain LSTM and GRU architectures achieved the highest validation Macro-F1.
 - Class-weighted loss improved minority-class recall in some experiments but reduced overall Macro-F1.
 - The publicly available dataset split may contain patient-level leakage, limiting the reliability of generalization claims.
+
+---
+
+## Live Application
+
+The trained LSTM model is deployed as an interactive web application using **Gradio, FastAPI, Docker, and Google Cloud Run**.
+
+**Application:** [Open ECG Arrhythmia Classifier](https://ecg-arrhythmia-573539539303.asia-south1.run.app/)
+
+### Application Features
+
+- Interactive ECG heartbeat classification.
+- Prediction using the trained Bidirectional LSTM model.
+- Five-class classification with confidence scores.
+- Class-wise prediction probabilities.
+- Sample ECG inputs for testing the application.
+- Bulk prediction through CSV file upload.
+- FastAPI backend for model inference.
+- Interactive Gradio frontend.
+
+### Prediction Workflow
+
+1. Open the deployed application.
+2. Select a sample ECG signal or provide your own input.
+3. Submit the signal for prediction.
+4. View the predicted heartbeat category and confidence.
+5. Inspect the probability distribution across all five classes.
+
+### Bulk CSV Prediction
+
+The application also supports bulk inference through CSV uploads.
+
+Each heartbeat must contain exactly **187 numerical signal values**.
+
+The uploaded CSV should contain one heartbeat per row. The application validates the input structure before running predictions.
+
+The output includes the predicted class and corresponding class probabilities for each heartbeat.
+
+### Application Architecture
+
+```text
+                 User
+                  |
+                  v
+            Gradio Frontend
+                  |
+                  v
+             FastAPI Backend
+                  |
+                  v
+             Input Validation
+                  |
+                  v
+          PyTorch LSTM Model
+                  |
+                  v
+          Prediction & Probabilities
+                  |
+                  v
+             Gradio Output
+```
+
+### API Endpoints
+
+The FastAPI backend exposes the following endpoints:
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/` | GET | Gradio application |
+| `/health` | GET | Application health check |
+| `/predict` | POST | ECG heartbeat prediction |
+| `/docs` | GET | Interactive Swagger API documentation |
+
+API documentation: [Open Swagger UI](https://ecg-arrhythmia-573539539303.asia-south1.run.app/docs)
 
 ---
 
@@ -54,10 +132,10 @@ The dataset is derived from the MIT-BIH Arrhythmia Database and contains heartbe
 
 Each sample contains 187 numerical signal values followed by the class label. The signals are scaled and shorter sequences are zero-padded.
 
-### Dataset files
+### Dataset Files
 
-- `mitbih_train.csv`: approximately 87,554 heartbeat samples
-- `mitbih_test.csv`: approximately 21,892 heartbeat samples
+- `mitbih_train.csv`: approximately 87,554 heartbeat samples.
+- `mitbih_test.csv`: approximately 21,892 heartbeat samples.
 
 The training dataset was divided into training and validation subsets using a stratified 85/15 split with a fixed random seed.
 
@@ -71,7 +149,7 @@ The saved split indices are stored under `data/processed/` to maintain consisten
 
 The Kaggle test dataset was kept separate from model training and validation and was used for final evaluation of the selected model.
 
-### Class imbalance
+### Class Imbalance
 
 The dataset is heavily dominated by Normal heartbeat samples. The minority classes, especially Fusion and Supraventricular beats, contain substantially fewer examples.
 
@@ -79,7 +157,7 @@ This imbalance makes accuracy an insufficient evaluation metric. Macro-F1 and ba
 
 ---
 
-## Important limitation: potential patient leakage
+## Important Limitation: Potential Patient Leakage
 
 The public dataset files do not provide patient identifiers for the individual heartbeat samples.
 
@@ -105,11 +183,11 @@ The project follows a consistent experimental workflow:
 6. Model selection using validation Macro-F1.
 7. Final evaluation on the separate test dataset.
 
-### Traditional machine learning baselines
+### Traditional Machine Learning Baselines
 
 Three traditional machine learning models were evaluated using the 187 ECG signal values as input features.
 
-| Model | Approach | Hyperparameter tuning |
+| Model | Approach | Hyperparameter Tuning |
 |---|---|---|
 | Dummy Classifier | Majority-class prediction | None |
 | Logistic Regression | Linear classification | RandomizedSearchCV |
@@ -119,9 +197,7 @@ The Dummy Classifier provides a reference performance by predicting the majority
 
 Logistic Regression and Random Forest were optimized using `RandomizedSearchCV`, with hyperparameter search conducted on the training portion of the dataset. The validation set was reserved for evaluating the resulting models.
 
-This provides a stronger baseline comparison by evaluating tuned traditional machine learning models against the deep learning architectures.
-
-### Deep learning architectures
+### Deep Learning Architectures
 
 #### 1D CNN
 
@@ -170,7 +246,7 @@ The GRU uses the same overall design and configuration as the LSTM, replacing th
 
 **Total trainable parameters: 101,509**
 
-### Training configuration
+### Training Configuration
 
 | Parameter | Value |
 |---|---|
@@ -189,7 +265,7 @@ The best checkpoint for each experiment was saved based on validation Macro-F1 r
 
 ---
 
-## Class imbalance experiments
+## Class Imbalance Experiments
 
 Each deep learning architecture was trained twice:
 
@@ -198,13 +274,15 @@ Each deep learning architecture was trained twice:
 
 The class weights were calculated using the training split only:
 
-`[0.2416, 7.8751, 3.0252, 27.3101, 2.7230]`
+```python
+[0.2416, 7.8751, 3.0252, 27.3101, 2.7230]
+```
 
 The purpose of weighted loss was to penalize mistakes on minority classes more heavily and investigate whether their recall could be improved.
 
 ---
 
-## Validation results
+## Validation Results
 
 Model selection was performed using the validation dataset.
 
@@ -224,10 +302,10 @@ Model selection was performed using the validation dataset.
 
 *All metrics are expressed as percentages.*
 
-### Key observations
+### Key Observations
 
-- **LSTM Plain achieved the highest Macro-F1**, at 94.43%.
-- **GRU Plain achieved the highest accuracy**, at 99.02%.
+- LSTM Plain achieved the highest Macro-F1, at 94.43%.
+- GRU Plain achieved the highest accuracy, at 99.02%.
 - LSTM Plain and GRU Plain had nearly identical Macro-F1 scores.
 - CNN Plain performed strongly, achieving 91.78% Macro-F1.
 - Random Forest achieved 90.37% Macro-F1, making it a competitive traditional ML baseline.
@@ -235,13 +313,13 @@ Model selection was performed using the validation dataset.
 
 The difference between LSTM Plain and GRU Plain in Macro-F1 was approximately 0.09 percentage points. This is too small to confidently establish a meaningful performance difference from a single validation run.
 
-### Selected model
+### Selected Model
 
 The Bidirectional LSTM Plain model was selected for final test evaluation because it achieved the highest validation Macro-F1 and demonstrated strong precision and recall across the five classes.
 
 ---
 
-## Class-wise validation performance
+## Class-wise Validation Performance
 
 ### LSTM Plain
 
@@ -257,7 +335,7 @@ The model achieved strong performance on Normal, Ventricular, and Unknown heartb
 
 Supraventricular and Fusion beats remained comparatively more challenging, which is expected given their lower representation and similarities to other heartbeat morphologies.
 
-### Validation confusion matrix
+### Validation Confusion Matrix
 
 Rows represent true labels and columns represent predicted labels.
 
@@ -273,13 +351,13 @@ The main validation errors involved Supraventricular beats being classified as N
 
 ---
 
-## Final test evaluation
+## Final Test Evaluation
 
 The selected LSTM Plain model was evaluated on the separate Kaggle test dataset.
 
 No model selection was performed using the test results.
 
-### Test performance
+### Test Performance
 
 | Metric | Score |
 |---|---:|
@@ -290,7 +368,7 @@ No model selection was performed using the test results.
 | Balanced Accuracy | 91.30% |
 | Weighted F1 | 98.67% |
 
-### Class-wise test performance
+### Class-wise Test Performance
 
 | Class | Precision | Recall | F1-score | Support |
 |---|---:|---:|---:|---:|
@@ -300,7 +378,7 @@ No model selection was performed using the test results.
 | F | 85.99% | 83.33% | 84.64% | 162 |
 | Q | 99.50% | 99.07% | 99.28% | 1,608 |
 
-### Test confusion matrix
+### Test Confusion Matrix
 
 | True \ Predicted | N | S | V | F | Q |
 |---|---:|---:|---:|---:|---:|
@@ -310,7 +388,7 @@ No model selection was performed using the test results.
 | F | 18 | 0 | 9 | 135 | 0 |
 | Q | 13 | 0 | 2 | 0 | 1,593 |
 
-### Validation vs test performance
+### Validation vs Test Performance
 
 | Metric | Validation | Test |
 |---|---:|---:|
@@ -328,7 +406,7 @@ These errors highlight the difficulty of distinguishing minority heartbeat categ
 
 ---
 
-## Plain vs weighted loss
+## Plain vs Weighted Loss
 
 | Model | Loss | Accuracy | Macro-F1 | Balanced Accuracy |
 |---|---|---:|---:|---:|
@@ -339,7 +417,7 @@ These errors highlight the difficulty of distinguishing minority heartbeat categ
 | GRU | Plain | 99.02% | 94.34% | 93.35% |
 | GRU | Weighted | 97.14% | 86.93% | 93.59% |
 
-### Effect of class weighting
+### Effect of Class Weighting
 
 Class weighting generally increased balanced accuracy or improved recall for selected minority classes, but reduced Macro-F1 and accuracy in these experiments.
 
@@ -355,7 +433,7 @@ These experiments demonstrate that class weighting is not guaranteed to improve 
 
 ---
 
-## Error analysis
+## Error Analysis
 
 The test confusion matrix indicates that most classification errors occur between classes with fewer samples or similar signal characteristics.
 
@@ -368,7 +446,7 @@ Important error patterns include:
 
 These patterns motivate further investigation through waveform visualization and model explainability.
 
-**Planned analysis:**
+### Planned Analysis
 
 - Visualize representative misclassified test beats.
 - Compare true and predicted classes.
@@ -377,9 +455,9 @@ These patterns motivate further investigation through waveform visualization and
 
 ---
 
-## What I tried first, and what went wrong
+## What I Tried First, and What Went Wrong
 
-### FAERS forecasting — abandoned initial approach
+### FAERS Forecasting — Abandoned Initial Approach
 
 The first project idea involved forecasting FDA adverse-event report volumes using the openFDA API, focusing on adalimumab reports.
 
@@ -396,7 +474,7 @@ The forecasting project was abandoned in favor of ECG heartbeat classification, 
 
 The original notebook is preserved in `notebooks/archive/` to document the initial exploration.
 
-### First LSTM experiment — failed
+### First LSTM Experiment — Failed
 
 The initial LSTM experiment used:
 
@@ -418,11 +496,91 @@ The architecture and training setup were revised to use a two-layer bidirectiona
 
 The revised model achieved 94.43% validation Macro-F1.
 
-### Early CNN training mistake
+### Early CNN Training Mistake
 
 An early CNN experiment unintentionally continued training from already-trained weights, inflating its apparent results.
 
 The final experiments were rerun using freshly initialized models to ensure that the reported comparisons were based on independent training runs.
+
+---
+
+## Deployment Architecture
+
+The application is containerized using Docker and deployed on Google Cloud Run.
+
+### Technology Stack
+
+| Component | Technology |
+|---|---|
+| Programming Language | Python 3.12 |
+| Deep Learning | PyTorch |
+| ML | Scikit-learn |
+| API Backend | FastAPI |
+| Interactive Frontend | Gradio |
+| Data Processing | NumPy, Pandas |
+| Containerization | Docker |
+| Cloud Hosting | Google Cloud Run |
+| Container Registry | Google Artifact Registry |
+| API Server | Uvicorn |
+
+### Deployment Workflow
+
+```text
+Local Development
+       |
+       v
+   Docker Build
+       |
+       v
+  Docker Image
+       |
+       v
+Google Artifact Registry
+       |
+       v
+   Google Cloud Run
+       |
+       v
+Public HTTPS Application
+```
+
+The application runs using CPU-based PyTorch inference. Model weights are loaded when the application starts and reused for subsequent prediction requests.
+
+The container listens on port `8080`, using the platform-provided `PORT` environment variable.
+
+The Docker image includes the application source code, dependencies, and selected model checkpoint. Training datasets and notebooks are excluded from the deployment image.
+
+### Running the Application Locally
+
+After installing the dependencies and ensuring the model checkpoint is present, start the application from the repository root:
+
+```bash
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8080
+```
+
+Open:
+
+- Gradio application: http://localhost:8080/
+- FastAPI documentation: http://localhost:8080/docs
+- Health check: http://localhost:8080/health
+
+### Building the Docker Image
+
+```bash
+docker build -t ecg-arrhythmia:latest .
+```
+
+Run the container:
+
+```bash
+docker run --rm -p 8080:8080 ecg-arrhythmia:latest
+```
+
+The application will be accessible at:
+
+```text
+http://localhost:8080/
+```
 
 ---
 
@@ -438,19 +596,29 @@ The final experiments were rerun using freshly initialized models to ensure that
 
 ---
 
-## Repository structure
+## Repository Structure
 
 ```text
 ecg-arrhythmia-classification/
 │
-├── config.yaml
-├── requirements.txt
-├── README.md
-├── .gitignore
+├── app/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── frontend.py
+│   └── examples.csv
+│
+├── src/
+│   ├── __init__.py
+│   ├── model.py
+│   ├── preprocessing.py
+│   └── predict.py
+│
+├── models/
+│   └── lstm_plain.pt
 │
 ├── data/
-│   ├── raw/                 # Dataset files, not committed
-│   └── processed/            # Saved split indices
+│   ├── raw/
+│   └── processed/
 │
 ├── notebooks/
 │   ├── 01_eda_and_ml_baselines.ipynb
@@ -458,34 +626,24 @@ ecg-arrhythmia-classification/
 │   ├── 03_pytorch_lstm_gru.ipynb
 │   ├── 04_results_and_error_analysis.ipynb
 │   ├── 05_final_test_evaluation.ipynb
-│   └── archive/              # Initial FAERS forecasting attempt
+│   └── archive/
 │
-├── src/
-│   ├── preprocessing.py
-│   ├── dataset.py
-│   ├── baseline_models.py
-│   ├── models.py
-│   ├── train.py
-│   ├── evaluate.py
-│   ├── explain.py
-│   └── utils.py
-│
-├── models/
-│   └── final/
-│
-├── results/
-│   ├── figures/
-│   └── metrics/
-│
-└── app/
-    └── gradio_app.py         # Deployment application
+├── reports/
+├── requirements.txt
+├── config.yaml
+├── Dockerfile
+├── .dockerignore
+├── .gitignore
+└── README.md
 ```
+
+*The deployment structure above reflects the application and inference files. Experiment notebooks and local datasets are maintained separately from the production container.*
 
 ---
 
-## How to run
+## How to Run the Project
 
-### 1. Clone the repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/ashit0907/ecg-arrhythmia-classification.git
@@ -493,7 +651,7 @@ git clone https://github.com/ashit0907/ecg-arrhythmia-classification.git
 cd ecg-arrhythmia-classification
 ```
 
-### 2. Create a virtual environment
+### 2. Create a Virtual Environment
 
 ```bash
 python -m venv venv
@@ -501,10 +659,10 @@ python -m venv venv
 
 Activate it:
 
-**Windows**
+**Windows PowerShell**
 
-```bash
-venv\Scripts\activate
+```powershell
+venv\Scripts\Activate.ps1
 ```
 
 **Linux/macOS**
@@ -513,13 +671,15 @@ venv\Scripts\activate
 source venv/bin/activate
 ```
 
-### 3. Install dependencies
+### 3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Download the dataset
+Install a compatible PyTorch build separately if it is not included in your requirements file. For GPU training, use the appropriate CUDA-enabled installation from the official [PyTorch installation guide](https://pytorch.org/get-started/locally/).
+
+### 4. Download the Dataset
 
 Download the [ECG Heartbeat Categorization Dataset](https://www.kaggle.com/datasets/shayanfazeli/heartbeat) from Kaggle.
 
@@ -536,21 +696,29 @@ mitbih_train.csv
 mitbih_test.csv
 ```
 
-### 5. Run the notebooks
+### 5. Run the Notebooks
 
 Execute the notebooks in order:
 
-1. EDA and traditional ML baselines
-2. CNN experiments
-3. LSTM and GRU experiments
-4. Model comparison and error analysis
-5. Final test evaluation
+1. EDA and traditional ML baselines.
+2. CNN experiments.
+3. LSTM and GRU experiments.
+4. Model comparison and error analysis.
+5. Final test evaluation.
 
 The saved split indices ensure that the training and validation split can be reused consistently.
 
+### 6. Run the Application
+
+Ensure `models/lstm_plain.pt` is available, then execute:
+
+```bash
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8080
+```
+
 ---
 
-## Hardware and environment
+## Hardware and Environment
 
 | Component | Configuration |
 |---|---|
@@ -561,20 +729,19 @@ The saved split indices ensure that the training and validation split can be reu
 | Framework | PyTorch |
 | CUDA | CUDA-enabled PyTorch installation |
 
-The experiments were conducted locally using GPU acceleration.
+The experiments were conducted locally using GPU acceleration. The deployed application uses CPU-based inference.
 
 ---
 
-## Future work
+## Future Work
 
 - [ ] Visual error analysis of misclassified test beats.
 - [ ] Occlusion-based explainability for ECG predictions.
-- [ ] Interactive Gradio demo.
-- [ ] Deployment on Hugging Face Spaces.
 - [ ] Patient-wise evaluation using the original MIT-BIH recordings and `wfdb`.
 - [ ] Multiple random seeds with mean and standard deviation.
 - [ ] Evaluation on external ECG datasets.
 - [ ] Investigate more advanced imbalance-handling techniques.
+- [ ] Improve bulk CSV validation and prediction reporting.
 
 ---
 
@@ -594,4 +761,8 @@ The experiments were conducted locally using GPU acceleration.
 
 B.Tech Computer Science Engineering — AI & Machine Learning
 
-[GitHub](https://github.com/ashit0907)
+[GitHub Profile](https://github.com/ashit0907)
+
+**Live Project:** [ECG Heartbeat Arrhythmia Classification](https://ecg-arrhythmia-573539539303.asia-south1.run.app/)
+
+**API Documentation:** [FastAPI Swagger UI](https://ecg-arrhythmia-573539539303.asia-south1.run.app/docs)
